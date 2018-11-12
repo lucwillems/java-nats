@@ -155,6 +155,13 @@ public class Options {
      */
     public static final int DEFAULT_BUFFER_SIZE = 64 * 1024;
 
+    /**
+     * Default queue size used by bound queues between IO threads to prevent OOM ,
+     * should be set to a value where normal "fullspeed" messaging is not delayed
+     * recommended value : 2048 for high performance sending (> 1M msg/sec)
+     */
+    public static final int DEFAULT_IO_QUEUE_SIZE = 2048;
+
     static final String PFX = "io.nats.client.";
 
     /**
@@ -285,6 +292,11 @@ public class Options {
     public static final String PROP_UTF8_SUBJECTS = "allow.utf8.subjects";
 
     /**
+     * This property is used to bound Message Queue size to prevent OOM
+     */
+    public static final String PROP_IOQUEUE_SIZE = "io.queue.size";
+
+    /**
      * Protocol key {@value #OPTION_VERBOSE}, see {@link Builder#verbose() verbose}.
      */
     static final String OPTION_VERBOSE = "verbose";
@@ -386,6 +398,8 @@ public class Options {
 
     private final boolean trackAdvancedStats;
 
+    private final int IOQueueSize;
+
     /**
      * Options are created using a Builder. The builder supports chaining and will
      * create a default set of options if no methods are calls. The builder can also
@@ -426,6 +440,8 @@ public class Options {
         private ErrorListener errorListener = null;
         private ConnectionListener connectionListener = null;
         private String dataPortType = DEFAULT_DATA_PORT_TYPE;
+
+        private int IOQueueSize = DEFAULT_IO_QUEUE_SIZE;
 
         /**
          * Constructs a new Builder with the default values.
@@ -585,6 +601,10 @@ public class Options {
 
             if (props.containsKey(PROP_DATA_PORT_TYPE)) {
                 this.dataPortType = props.getProperty(PROP_DATA_PORT_TYPE);
+            }
+
+            if (props.contains(PROP_IOQUEUE_SIZE)) {
+                this.IOQueueSize=Integer.parseInt(props.getProperty(PROP_IOQUEUE_SIZE));
             }
         }
 
@@ -967,6 +987,12 @@ public class Options {
             return this;
         }
 
+        public Builder IOQueuSize(int max) {
+            this.IOQueueSize = max;
+            return this;
+        }
+
+
         /**
          * Build an Options object from this Builder.
          * 
@@ -1041,6 +1067,7 @@ public class Options {
         this.connectionListener = b.connectionListener;
         this.dataPortType = b.dataPortType;
         this.trackAdvancedStats = b.trackAdvancedStats;
+        this.IOQueueSize = b.IOQueueSize;
     }
 
     /**
@@ -1204,6 +1231,13 @@ public class Options {
      */
     public long getReconnectBufferSize() {
         return reconnectBufferSize;
+    }
+
+    /**
+     * @return the default size for bounded IO queue
+     */
+    public int getIOQueueSize() {
+        return IOQueueSize;
     }
 
     /**

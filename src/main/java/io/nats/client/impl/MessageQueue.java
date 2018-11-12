@@ -15,6 +15,7 @@ package io.nats.client.impl;
 
 import java.time.Duration;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
@@ -29,11 +30,11 @@ class MessageQueue {
     private final AtomicLong sizeInBytes;
     private final AtomicInteger running;
     private final boolean singleThreadedReader;
-    private final ConcurrentLinkedQueue<NatsMessage> queue;
+    private final LinkedBlockingQueue<NatsMessage> queue;
     private final ConcurrentLinkedQueue<Thread> waiters;
 
-    MessageQueue(boolean singleReaderMode) {
-        this.queue = new ConcurrentLinkedQueue<>();
+    MessageQueue(boolean singleReaderMode,int size) {
+        this.queue = new LinkedBlockingQueue<>(size);
         this.running = new AtomicInteger(RUNNING);
         this.sizeInBytes = new AtomicLong(0);
         this.length = new AtomicLong(0);
@@ -95,7 +96,7 @@ class MessageQueue {
     }
 
     void push(NatsMessage msg) {
-        this.queue.add(msg);
+        this.queue.offer(msg);
         this.sizeInBytes.getAndAdd(msg.getSizeInBytes());
         this.length.incrementAndGet();
         signalOne();
@@ -291,7 +292,9 @@ class MessageQueue {
             
             cursor = this.queue.poll();
         }
-
-        this.queue.addAll(newQueue);
+        for(NatsMessage msg:newQueue) {
+            queue.offer(msg);
+        }
+        //this.queue.addAll(newQueue);
     }
 }

@@ -41,7 +41,7 @@ class NatsSubscription extends NatsConsumer implements Subscription {
         this.unSubMessageLimit = new AtomicLong(-1);
 
         if (this.dispatcher == null) {
-            this.incoming = new MessageQueue(false);
+            this.incoming = new MessageQueue(false,connection.getOptions().getIOQueueSize());
         }
     }
 
