@@ -48,9 +48,9 @@ class NatsConnectionWriter implements Runnable {
         this.stopped.complete(Boolean.TRUE); // we are stopped on creation
 
         this.sendBuffer = new byte[connection.getOptions().getBufferSize()];
-        int qsize=connection.getOptions().getIOQueueSize();
-        outgoing = new MessageQueue(true,qsize);
-        reconnectOutgoing = new MessageQueue(true,qsize);
+
+        outgoing = new MessageQueue(true);
+        reconnectOutgoing = new MessageQueue(true);
     }
 
     // Should only be called if the current thread has exited.
